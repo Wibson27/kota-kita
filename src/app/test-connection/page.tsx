@@ -3,10 +3,11 @@
 
 import { useState, useEffect } from 'react'
 import { createSupabaseClient } from '@/lib/db/client'
+import type { City } from '@/types/database'
 
 export default function TestConnection() {
   const [status, setStatus] = useState('Testing connection...')
-  const [cities, setCities] = useState([])
+  const [cities, setCities] = useState<City[]>([])
 
   useEffect(() => {
     async function testConnection() {
@@ -43,7 +44,7 @@ export default function TestConnection() {
         <div>
           <strong>Sample Cities:</strong>
           <ul className="list-disc ml-6">
-            {cities.map((city: any) => (
+            {cities.map((city) => (
               <li key={city.id}>{city.name}, {city.province}</li>
             ))}
           </ul>

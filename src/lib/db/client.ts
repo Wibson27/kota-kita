@@ -1,5 +1,5 @@
 // src/lib/db/client.ts
-import { createClientComponentClient, createServerComponentClient } from '@supabase/ssr'
+import { createBrowserClient, createServerClient } from '@supabase/ssr'
 import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import type { Database } from '@/types/database'
@@ -15,15 +15,35 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 // Client-side Supabase client (for browser)
 export const createSupabaseClient = () => {
-  return createClientComponentClient<Database>()
+  return createBrowserClient<Database>(supabaseUrl, supabaseAnonKey)
 }
 
 // Server-side Supabase client (for SSR/API routes)
-export const createSupabaseServerClient = () => {
-  const cookieStore = cookies()
-  return createServerComponentClient<Database>({
-    cookies: () => cookieStore,
-  })
+export const createSupabaseServerClient = async () => {
+  const cookieStore = await cookies()
+
+  return createServerClient<Database>(
+    supabaseUrl,
+    supabaseAnonKey,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll()
+        },
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            )
+          } catch {
+            // The `setAll` method was called from a Server Component.
+            // This can be ignored if you have middleware refreshing
+            // user sessions.
+          }
+        },
+      },
+    }
+  )
 }
 
 // Admin Supabase client (for server-side operations with elevated privileges)
